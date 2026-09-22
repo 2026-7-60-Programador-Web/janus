@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil do egresso — Janus</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="app-header">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="index.html">Janus</a>
+        <p class="app-header-meta" id="header-meta">Perfil do egresso</p>
+      </div>
+      <div class="app-header-right">
+        <a href="#" id="voltar-link" hidden>Voltar</a>
+        <a href="login.html" id="sair-link">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="app-main">
+    <div class="wrap">
+      <div class="app-card">
+        <p class="form-message" id="perfil-message" hidden></p>
+
+        <!-- Modo visualização (currículo) -->
+        <div id="perfil-visualizacao">
+          <div class="profile-head">
+            <img class="profile-photo" id="perfil-foto" src="" alt="" hidden>
+            <span class="avatar" id="perfil-avatar"></span>
+            <div>
+              <h1 id="perfil-nome">—</h1>
+              <p id="perfil-formacao-principal">—</p>
+            </div>
+          </div>
+
+          <div class="profile-contact" id="perfil-contato"></div>
+
+          <p class="section-label">Sobre</p>
+          <p id="perfil-bio-visualizacao" class="profile-bio">—</p>
+
+          <div class="skills-columns">
+            <div>
+              <p class="section-label">Soft skills</p>
+              <div class="chip-list" id="perfil-soft-visualizacao"></div>
+            </div>
+            <div>
+              <p class="section-label">Hard skills</p>
+              <div class="chip-list" id="perfil-hard-visualizacao"></div>
+            </div>
+          </div>
+
+          <p class="section-label">Formação</p>
+          <ul class="formacoes-view" id="perfil-formacoes-visualizacao"></ul>
+
+          <button type="button" class="button button-primary button-block" id="editar-perfil-btn" style="margin-top: 1.5rem;" hidden>Editar meu perfil</button>
+          <a class="button button-primary button-block" id="contato-whatsapp-btn" style="margin-top: 1.5rem;" hidden target="_blank" rel="noopener">Entrar em contato via WhatsApp</a>
+          <p class="field-hint" id="contato-sem-telefone" hidden>Este egresso ainda não informou um telefone para contato.</p>
+          <button type="button" class="button button-danger button-block" id="remover-perfil-btn" style="margin-top: 1.5rem;" hidden>Remover egresso</button>
+        </div>
+
+        <!-- Modo edição (só o próprio egresso vê) -->
+        <form id="perfil-edicao" hidden>
+          <div class="field profile-photo-upload">
+            <span class="avatar" id="edicao-avatar-preview"></span>
+            <img class="profile-photo" id="edicao-foto-preview" src="" alt="" hidden>
+            <label class="upload-button" data-upload-field>
+              <input type="file" id="perfil-foto-input" accept="image/*" data-upload-input>
+              <span data-upload-text>Escolher foto (opcional)</span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label for="perfil-email-input">E-mail</label>
+            <input type="email" id="perfil-email-input" name="email" placeholder="seu.nome@exemplo.com">
+          </div>
+
+          <div class="field">
+            <label for="perfil-telefone-input">Telefone (com DDD)</label>
+            <input type="tel" id="perfil-telefone-input" name="telefone" placeholder="(99) 99999-9999">
+          </div>
+
+          <div class="field">
+            <label for="perfil-endereco-input">Endereço (opcional)</label>
+            <input type="text" id="perfil-endereco-input" name="endereco" placeholder="Bairro, cidade">
+          </div>
+
+          <div class="field">
+            <label for="perfil-genero-input">Gênero (opcional)</label>
+            <select id="perfil-genero-input" name="genero" style="width: 100%; font-family: var(--font-body); font-size: 0.95rem; padding: 0.65em 0.75em; border: 1px solid var(--color-border); border-radius: var(--radius); color: var(--color-text); background: var(--color-surface);">
+              <option value="">Prefiro não informar</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="perfil-nascimento-input">Data de nascimento (opcional)</label>
+            <input type="date" id="perfil-nascimento-input" name="dataNascimento">
+          </div>
+
+          <div class="field">
+            <label for="perfil-bio-input">Sobre você</label>
+            <textarea id="perfil-bio-input" name="bio" rows="4" placeholder="Conte um pouco sobre sua trajetória e o que procura" style="width: 100%; font-family: var(--font-body); font-size: 1rem; padding: 0.65em 0.8em; border-radius: var(--radius); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="perfil-soft-input">Soft skills</label>
+            <div class="field-inline" data-skill-widget data-chip-style="teal">
+              <input type="text" id="perfil-soft-input" class="skill-input" placeholder="Ex: Organização">
+              <button type="button" class="button button-secondary skill-add-btn">Adicionar</button>
+            </div>
+            <p class="skill-error" hidden>Digite uma competência antes de adicionar</p>
+            <div class="chip-list" data-lista="soft"></div>
+          </div>
+
+          <div class="field">
+            <label for="perfil-hard-input">Hard skills</label>
+            <div class="field-inline" data-skill-widget data-chip-style="info">
+              <input type="text" id="perfil-hard-input" class="skill-input" placeholder="Ex: JavaScript">
+              <button type="button" class="button button-secondary skill-add-btn">Adicionar</button>
+            </div>
+            <p class="skill-error" hidden>Digite uma competência antes de adicionar</p>
+            <div class="chip-list" data-lista="hard"></div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Formação</span>
+            <div class="formacao-inputs" data-formacao-widget>
+              <input type="text" class="formacao-curso" placeholder="Curso">
+              <input type="text" class="formacao-instituicao" placeholder="Instituição">
+              <input type="text" class="formacao-ano" placeholder="Ano">
+            </div>
+            <button type="button" class="button button-secondary formacao-add-btn">Adicionar formação</button>
+            <p class="formacao-error" hidden>Preencha ao menos o curso e a instituição</p>
+            <ul class="formacao-list"></ul>
+          </div>
+
+          <button type="submit" class="button button-primary button-block">Salvar perfil</button>
+          <button type="button" class="button button-secondary button-block" id="cancelar-edicao-btn" style="margin-top: 0.6rem;">Cancelar</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

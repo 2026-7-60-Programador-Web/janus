@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do administrador — Janus</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="app-header">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="index.html">Janus</a>
+        <p class="app-header-meta">Painel do administrador · Instituição</p>
+      </div>
+      <div class="app-header-right">
+        <a href="login.html">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="app-main">
+    <div class="wrap">
+      <nav class="admin-tabs" aria-label="Seções do painel">
+        <button type="button" class="admin-tab is-active" id="tab-egressos" data-tab="egressos">Egressos</button>
+        <button type="button" class="admin-tab" id="tab-empresas" data-tab="empresas">Empresas</button>
+      </nav>
+
+      <!-- ================= ABA EGRESSOS ================= -->
+      <div class="admin-panel" id="painel-egressos">
+        <div class="app-card">
+          <h1>Visão geral</h1>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <p>Egressos aprovados</p>
+              <strong id="stat-aprovados">0</strong>
+            </div>
+            <div class="stat-card">
+              <p>Pendentes</p>
+              <strong class="stat-warning" id="stat-pendentes">0</strong>
+            </div>
+          </div>
+
+          <p class="section-label">Cadastros pendentes de validação</p>
+          <p class="app-intro" style="margin-top: -0.5em;">Clique no nome do egresso para abrir a solicitação completa, ver os documentos enviados e aprovar ou recusar.</p>
+
+          <div id="lista-pendentes"></div>
+        </div>
+
+        <div class="app-card">
+          <p class="section-label">Egressos aprovados</p>
+          <div id="lista-aprovados"></div>
+        </div>
+
+        <div class="app-card">
+          <p class="section-label">Adicionar egresso manualmente</p>
+          <p class="app-intro">Use quando o egresso não fez o cadastro pelo site e a instituição vai lançar os dados diretamente — já entra aprovado.</p>
+
+          <button type="button" class="button button-secondary manual-add-toggle" id="manual-add-toggle">Adicionar egresso</button>
+
+          <form id="manual-add-form" hidden>
+            <p class="form-message" id="manual-add-message" hidden></p>
+
+            <div class="field">
+              <label for="manual-nome">Nome completo</label>
+              <input type="text" id="manual-nome" name="nome" placeholder="Nome do egresso">
+            </div>
+
+            <div class="field">
+              <label for="manual-cpf">CPF</label>
+              <input type="text" id="manual-cpf" name="cpf" placeholder="000.000.000-00" data-mask="cpf" inputmode="numeric">
+            </div>
+
+            <div class="field">
+              <label for="manual-senha">Senha de acesso</label>
+              <input type="password" id="manual-senha" name="senha" placeholder="Defina a senha do egresso" autocomplete="new-password">
+              <p class="field-hint">O egresso vai entrar no sistema com o CPF e esta senha. Sem ela, não terá acesso ao próprio perfil.</p>
+            </div>
+
+            <div class="field">
+              <label for="manual-telefone">Telefone (com DDD)</label>
+              <input type="tel" id="manual-telefone" name="telefone" placeholder="(99) 99999-9999">
+            </div>
+
+            <div class="field">
+              <span class="field-label">Formação</span>
+              <div class="formacao-inputs" data-formacao-widget>
+                <input type="text" class="formacao-curso" placeholder="Curso">
+                <input type="text" class="formacao-instituicao" placeholder="Instituição" value="Senac">
+                <input type="text" class="formacao-ano" placeholder="Ano">
+              </div>
+              <button type="button" class="button button-secondary formacao-add-btn">Adicionar formação</button>
+              <p class="formacao-error" hidden>Preencha ao menos o curso e a instituição</p>
+              <ul class="formacao-list"></ul>
+            </div>
+
+            <div class="field">
+              <label for="manual-competencia-input">Competências (hard skills)</label>
+              <div class="field-inline" data-skill-widget data-chip-style="info">
+                <input type="text" id="manual-competencia-input" class="skill-input" placeholder="Digite uma competência">
+                <button type="button" class="button button-secondary skill-add-btn">Adicionar</button>
+              </div>
+              <p class="skill-error" hidden>Digite uma competência antes de adicionar</p>
+              <div class="chip-list"></div>
+            </div>
+
+            <button type="submit" class="button button-primary button-block">Cadastrar egresso</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================= ABA EMPRESAS ================= -->
+      <div class="admin-panel" id="painel-empresas" hidden>
+        <div class="app-card">
+          <p class="section-label">Empresas parceiras</p>
+          <p class="app-intro">Apenas empresas listadas aqui conseguem entrar e buscar egressos aprovados.</p>
+
+          <div id="lista-parceiras"></div>
+
+          <button type="button" class="button button-secondary button-block parceira-add-toggle" id="parceira-add-toggle" style="margin-top: 1rem;">Adicionar empresa parceira</button>
+
+          <form id="parceira-add-form" hidden>
+            <p class="form-message" id="parceira-add-message" hidden></p>
+
+            <div class="field">
+              <label for="parceira-nome">Nome da empresa</label>
+              <input type="text" id="parceira-nome" name="nome" placeholder="Nome da empresa">
+            </div>
+
+            <div class="field">
+              <label for="parceira-cnpj">CNPJ</label>
+              <input type="text" id="parceira-cnpj" name="cnpj" placeholder="00.000.000/0000-00">
+            </div>
+
+            <button type="submit" class="button button-primary button-block">Adicionar parceira</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
