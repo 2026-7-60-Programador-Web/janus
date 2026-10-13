@@ -1,0 +1,304 @@
+/* =========================================================
+   JANUS — navegação global
+   A navegação original permanece no HTML para compatibilidade,
+   mas a interface visível é construída por menu.js.
+   ========================================================= */
+:root {
+    --janus-gold: #f2c94c;
+    --janus-gold-soft: #ffe7a3;
+    --janus-gold-dark: #a77a14;
+    --janus-navy: #101827;
+    --janus-navy-2: #182235;
+    --janus-navy-3: #22304a;
+    --janus-page: #f4f6f8;
+    --janus-surface: #ffffff;
+    --janus-border: #dbe2e8;
+    --janus-muted: #697586;
+    --janus-danger: #b84b4b;
+    --janus-sidebar-width: 264px;
+    --janus-sidebar-mini: 78px;
+}
+
+.janus-nav .nav-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+.janus-nav .nav-icone svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* =========================================================
+   Sidebar desktop
+   ========================================================= */
+body { transition: padding-left .25s ease; }
+
+.janus-sidebar {
+    position: fixed;
+    z-index: 3000;
+    inset: 0 auto 0 0;
+    width: var(--janus-sidebar-width);
+    background: linear-gradient(180deg, var(--janus-navy-2) 0%, var(--janus-navy) 100%);
+    border-right: 1px solid rgba(242,201,76,.22);
+    box-shadow: 8px 0 28px rgba(16,24,39,.14);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 12px 14px;
+    transition: width .25s ease, transform .25s ease;
+}
+
+body:not(.janus-menu-collapsed) { padding-left: var(--janus-sidebar-width); }
+body.janus-menu-collapsed { padding-left: var(--janus-sidebar-mini); }
+
+.janus-sidebar-logo {
+    height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff !important;
+    text-decoration: none !important;
+    padding: 0 10px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.janus-logo-mark {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--janus-gold);
+    border-radius: 11px;
+    background: rgba(242,201,76,.08);
+    color: var(--janus-gold);
+    font: 700 23px Cinzel, Georgia, serif;
+    box-shadow: 0 0 0 4px rgba(242,201,76,.04);
+}
+
+.janus-logo-text {
+    font: 700 22px Cinzel, Georgia, serif;
+    letter-spacing: 2px;
+    color: #fff;
+}
+
+.janus-sidebar-toggle {
+    position: absolute;
+    top: 32px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--janus-gold);
+    border-radius: 50%;
+    background: var(--janus-navy-3);
+    color: var(--janus-gold);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+.janus-sidebar-toggle:hover { background: var(--janus-gold); color: var(--janus-navy); }
+.janus-sidebar-toggle:focus-visible,
+.janus-mobile-trigger:focus-visible,
+.janus-sidebar-link:focus-visible { outline: 2px solid var(--janus-gold); outline-offset: 2px; }
+.toggle-arrow { font-size: 23px; line-height: 1; margin-top: -2px; }
+
+.janus-sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 2px 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(242,201,76,.35) transparent;
+}
+.janus-sidebar-links::-webkit-scrollbar { width: 5px; }
+.janus-sidebar-links::-webkit-scrollbar-track { background: transparent; }
+.janus-sidebar-links::-webkit-scrollbar-thumb { background: rgba(242,201,76,.35); border-radius: 8px; }
+
+.janus-sidebar-link {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    gap: 13px;
+    min-height: 48px;
+    padding: 10px 13px !important;
+    border-radius: 11px !important;
+    color: #cbd5e1 !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: background .18s ease, color .18s ease, transform .18s ease, border-color .18s ease;
+}
+
+.janus-sidebar-link .nav-icone { width: 25px; min-width: 25px; display: inline-flex; justify-content: center; }
+.janus-sidebar-link .nav-icone svg { width: 20px !important; height: 20px !important; stroke: currentColor; }
+.janus-sidebar-link:hover {
+    background: rgba(242,201,76,.10) !important;
+    color: #fff !important;
+    transform: translateX(2px);
+}
+.janus-sidebar-link.ativo {
+    background: linear-gradient(90deg, rgba(242,201,76,.18), rgba(242,201,76,.06)) !important;
+    color: var(--janus-gold-soft) !important;
+    border-color: rgba(242,201,76,.20) !important;
+}
+.janus-sidebar-link.ativo::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--janus-gold);
+}
+.janus-sidebar-link.sair-link { color: #efb2b2 !important; }
+
+.janus-sidebar-footer {
+    margin-top: auto;
+    padding: 12px 2px 0;
+    border-top: 1px solid rgba(255,255,255,.09);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: visible;
+}
+.janus-sidebar-footer .janus-sidebar-link { flex: 0 0 auto; }
+
+.janus-menu-collapsed .janus-sidebar { width: var(--janus-sidebar-mini); padding-left: 10px; padding-right: 10px; }
+.janus-menu-collapsed .janus-sidebar-logo { padding: 0 8px; }
+.janus-menu-collapsed .janus-logo-text { display: none; }
+.janus-menu-collapsed .janus-sidebar-link { justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
+.janus-menu-collapsed .janus-sidebar-link span:not(.nav-icone) { display: none; }
+.janus-menu-collapsed .janus-sidebar-link .nav-icone { width: 30px; min-width: 30px; }
+.janus-menu-collapsed .janus-sidebar-link:hover::after {
+    content: attr(aria-label);
+    position: absolute;
+    left: 64px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    background: var(--janus-navy);
+    color: #fff;
+    padding: 7px 10px;
+    border: 1px solid rgba(242,201,76,.18);
+    border-radius: 7px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 7px 18px rgba(0,0,0,.28);
+}
+.janus-menu-collapsed .janus-sidebar-footer { display: flex; }
+.janus-menu-collapsed .toggle-arrow { transform: rotate(180deg); }
+
+.janus-header-with-sidebar { position: relative; z-index: 10; }
+.janus-sidebar-backdrop { display: none; }
+.janus-mobile-trigger { display: none; }
+
+/* =========================================================
+   Cabeçalho limpo — somente JANUS centralizado
+   ========================================================= */
+.janus-header-with-sidebar .wrap {
+    position: relative;
+    width: 100%;
+    max-width: none;
+    justify-content: center !important;
+    text-align: center;
+}
+.janus-header-with-sidebar .app-header-meta,
+.janus-header-with-sidebar .app-header-right,
+.janus-header-with-sidebar .topbar-dir,
+.janus-header-with-sidebar .topbar-usuario,
+.janus-header-with-sidebar .topbar-espaco { display: none !important; }
+.janus-header-with-sidebar .topbar-esq {
+    width: 100%;
+    justify-content: center !important;
+}
+.janus-header-with-sidebar .marca,
+.janus-header-with-sidebar .topbar-marca,
+.janus-header-with-sidebar .logo {
+    margin: 0 auto;
+}
+
+/* =========================================================
+   Mobile — botão externo + drawer
+   ========================================================= */
+@media (max-width: 760px) {
+    body, body.janus-menu-collapsed { padding-left: 0 !important; }
+    body.janus-mobile-menu-open { overflow: hidden; }
+
+    .janus-sidebar {
+        width: min(300px, 88vw);
+        transform: translateX(-105%);
+        padding-top: 18px;
+        box-shadow: 14px 0 36px rgba(0,0,0,.26);
+    }
+    .janus-sidebar.mobile-open { transform: translateX(0); }
+    .janus-sidebar.collapsed { width: min(300px, 88vw); }
+    .janus-sidebar.collapsed .janus-logo-text,
+    .janus-sidebar.collapsed .janus-sidebar-link span:not(.nav-icone),
+    .janus-sidebar.collapsed .janus-sidebar-footer { display: initial; }
+    .janus-sidebar.collapsed .janus-sidebar-link { justify-content: flex-start; padding: 10px 13px !important; }
+    .janus-sidebar.collapsed .janus-sidebar-link .nav-icone { width: 25px; min-width: 25px; }
+    .janus-sidebar-toggle { right: 14px; top: 32px; }
+
+    .janus-mobile-trigger {
+        position: fixed;
+        z-index: 2998;
+        top: 14px;
+        left: 14px;
+        width: 46px;
+        height: 46px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--janus-border);
+        border-radius: 11px;
+        background: rgba(255,255,255,.96);
+        box-shadow: 0 6px 18px rgba(16,24,39,.12);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .janus-mobile-trigger span {
+        width: 19px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--janus-navy);
+        transition: transform .2s ease, opacity .2s ease;
+    }
+    .janus-mobile-trigger.is-open { background: var(--janus-navy); border-color: var(--janus-navy); }
+    .janus-mobile-trigger.is-open span { background: var(--janus-gold); }
+    .janus-mobile-trigger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .janus-mobile-trigger.is-open span:nth-child(2) { opacity: 0; }
+    .janus-mobile-trigger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .janus-sidebar-backdrop.show {
+        display: block;
+        position: fixed;
+        z-index: 2999;
+        inset: 0;
+        background: rgba(7,13,23,.58);
+        backdrop-filter: blur(2px);
+    }
+
+    /* Evita que o cabeçalho antigo ocupe espaço desnecessário no celular. */
+    .janus-header-with-sidebar { min-height: 58px; }
+}

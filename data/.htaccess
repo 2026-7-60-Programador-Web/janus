@@ -1,0 +1,9 @@
+# Os arquivos .json desta pasta (egressos com hash de senha, vagas) não devem ser
+# abertos pelo navegador. Só o PHP do sistema lê esses arquivos.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

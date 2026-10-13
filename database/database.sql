@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS janus CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+USE janus;
+
+CREATE TABLE usuarios
+(
+    id        INT AUTO_INCREMENT PRIMARY KEY,
+    nome      VARCHAR(120) NOT NULL,
+    email     VARCHAR(150) NOT NULL UNIQUE,
+    senha     VARCHAR(255) NOT NULL,
+    criado_em DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
