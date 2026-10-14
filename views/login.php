@@ -92,7 +92,7 @@ if (isset($_SESSION["email"])) {
         <button type="submit" class="btn-entrar">Entrar</button>
     </form>
 
-    <p class="footer-note">Não tem cadastro? <a href="egresso/cadastro.php">Cadastre-se</a></p>
+    <p class="footer-note">Não tem cadastro ainda? <a href="egresso/cadastro.php">Cadastre-se</a></p>
 </div>
 
 <script src="../assets/js/login.js"></script>
