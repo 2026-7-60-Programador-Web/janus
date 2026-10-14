@@ -217,6 +217,7 @@ $subtitulo = $formacaoPrincipal
         <nav class="app-header-right janus-nav egresso-nav" id="menu-egresso" aria-label="Navegação principal">
             <a href="painel.php"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg></span><span>Início</span></a>
             <a href="perfil.php" class="ativo"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span>Meu perfil</span></a>
+            <a href="../sobre.php"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg></span><span>Sobre o Janus</span></a>
             <a href="../../controllers/logout.php" class="sair-link"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-5"/></svg></span><span>Sair</span></a>
         </nav>
         <button type="button" class="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-egresso"><span></span><span></span><span></span></button>

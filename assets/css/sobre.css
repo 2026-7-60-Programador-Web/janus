@@ -1,0 +1,378 @@
+/* ==========================================================
+   JANUS | Página "Sobre o sistema"
+   Mesmo padrão visual do login e dos painéis (dourado + Cinzel/Inter)
+   ========================================================== */
+
+:root {
+    --bg: #ffffff;
+    --bg-page: #f4f6f8;
+    --gold: #f2c94c;
+    --gold-dark: #a77a14;
+    --gold-soft: #fff8df;
+    --text-dark: #1c1c1c;
+    --text-muted: #697586;
+    --border: #dbe2e8;
+    --surface-2: #eef2f5;
+}
+
+* { box-sizing: border-box; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+img, svg { max-width: 100%; height: auto; }
+
+body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text-dark);
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.65;
+}
+
+.wrap {
+    width: 100%;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ---------- Topo ---------- */
+.topo {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+}
+
+.topo .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.marca {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-decoration: none;
+}
+
+.topo nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.topo nav a.link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.topo nav a.link:hover { background: var(--surface-2); color: var(--text-dark); }
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-ouro { background: var(--gold); color: #fff; }
+.btn-ouro:hover { background: var(--gold-dark); }
+
+.btn-contorno { background: #fff; color: var(--gold-dark); border-color: var(--gold); }
+.btn-contorno:hover { background: var(--gold-soft); }
+
+/* ---------- Hero ---------- */
+.hero {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 0 56px;
+    text-align: center;
+}
+
+.hero .logo-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+
+.hero h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 40px;
+    letter-spacing: 6px;
+    margin: 0;
+}
+
+.hero .subtitulo {
+    margin: 6px 0 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.hero .lead {
+    max-width: 700px;
+    margin: 24px auto 28px;
+    font-size: 18px;
+    color: #3a4350;
+}
+
+.hero .acoes {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.selo-senac {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--gold-soft);
+    color: var(--gold-dark);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ---------- Seções ---------- */
+section { padding: 56px 0; }
+section.alt { background: var(--bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+.rotulo {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin: 0 0 8px;
+}
+
+section h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    margin: 0 0 14px;
+}
+
+.intro {
+    max-width: 760px;
+    color: #3a4350;
+    margin: 0 0 32px;
+}
+
+/* ---------- Cards ---------- */
+.grade {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.grade.dois { grid-template-columns: repeat(2, 1fr); }
+.grade.quatro { grid-template-columns: repeat(4, 1fr); }
+
+.card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+section.alt .card { background: var(--bg-page); box-shadow: none; }
+
+.card .icone {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--gold-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.card .icone svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: var(--gold-dark);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.card h3 { font-size: 17px; margin: 0 0 8px; }
+.card p { margin: 0; font-size: 14.5px; color: #3a4350; }
+
+.card ul { margin: 10px 0 0; padding-left: 18px; font-size: 14.5px; color: #3a4350; }
+.card li { margin-bottom: 4px; }
+
+/* ---------- Destaque do objetivo ---------- */
+.destaque {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--gold);
+    border-radius: 10px;
+    padding: 28px 28px 24px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.destaque p { margin: 0 0 12px; font-size: 16.5px; }
+.destaque p:last-child { margin-bottom: 0; }
+
+/* ---------- Perfis (egresso x admin) ---------- */
+.perfil-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.tag-egresso { background: #e6f3f1; color: #1d6b61; }
+.tag-admin { background: var(--gold-soft); color: var(--gold-dark); }
+
+/* ---------- Etapas ---------- */
+.etapas { list-style: none; counter-reset: etapa; margin: 0; padding: 0; display: grid; gap: 14px; }
+
+.etapas li {
+    counter-increment: etapa;
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px 18px 68px;
+}
+
+.etapas li::before {
+    content: counter(etapa);
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.etapas strong { display: block; font-size: 15.5px; }
+.etapas span { font-size: 14.5px; color: var(--text-muted); }
+
+/* ---------- Tecnologias ---------- */
+.techs { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+
+.tech {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tech img { width: 20px; height: 20px; }
+
+/* ---------- Estrutura de pastas ---------- */
+pre.arvore {
+    margin: 0;
+    background: #1c1c1c;
+    color: #f4f6f8;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+}
+
+pre.arvore .c { color: #f2c94c; }
+pre.arvore .m { color: #9aa5b1; }
+
+/* ---------- Roadmap ---------- */
+.fases { display: grid; gap: 14px; grid-template-columns: repeat(5, 1fr); }
+
+.fase {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.fase small {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+}
+
+.fase strong { display: block; font-size: 15px; margin: 4px 0 6px; }
+.fase p { margin: 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+
+/* ---------- Chamada final e rodapé ---------- */
+.chamada { text-align: center; }
+.chamada p { max-width: 620px; margin: 0 auto 24px; color: #3a4350; }
+
+footer.rodape {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 28px 24px 36px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+footer.rodape strong { color: var(--text-dark); }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 960px) {
+    .grade, .grade.quatro { grid-template-columns: repeat(2, 1fr); }
+    .fases { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .hero { padding: 44px 0 40px; }
+    .hero h1 { font-size: 30px; letter-spacing: 4px; }
+    .hero .lead { font-size: 16.5px; }
+    section { padding: 40px 0; }
+    section h2 { font-size: 22px; }
+    .grade, .grade.dois, .grade.quatro, .fases { grid-template-columns: 1fr; }
+    .topo nav a.link { display: none; }
+    .etapas li { padding-left: 62px; }
+}
+
+@media print {
+    .topo, .hero .acoes, .chamada { display: none; }
+    body { background: #fff; }
+    section { padding: 24px 0; }
+}
