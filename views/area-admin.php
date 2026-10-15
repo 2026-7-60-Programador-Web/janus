@@ -7,7 +7,7 @@ if (!isset($_SESSION["email"]) || $_SESSION["tipo"] !== "administrador") {
     header("Location: login.php");
     exit;
 }
-
+//abc
 ?>
 
 <!DOCTYPE html>
