@@ -9,8 +9,8 @@ if (!isset($_SESSION["email"]) || ($_SESSION["tipo"] ?? "") === "administrador")
 }
 
 // ---- Dados do egresso ----
-// Tenta achar o egresso logado no JSON do cadastro; se não achar, usa dados de exemplo
-// só para a tela aparecer preenchida (troque pela consulta ao banco depois).
+// Busca o egresso logado no banco (PDO); se não achar, usa dados de exemplo
+// só para a tela aparecer preenchida.
 $egresso = [
     "nome"        => $_SESSION["nome"] ?? "Egresso Janus",
     "email"       => $_SESSION["email"],
@@ -23,19 +23,29 @@ $egresso = [
     "formacoes"   => [],
 ];
 
-$arquivo = __DIR__ . "/../../data/egressos.json";
-if (file_exists($arquivo)) {
-    foreach ((array) json_decode(file_get_contents($arquivo), true) as $item) {
-        if (($item["email"] ?? "") === $_SESSION["email"]) {
-            $egresso["nome"]     = $item["nome"] ?? $egresso["nome"];
-            $egresso["telefone"] = $item["telefone"] ?? "";
-            $egresso["curso"]    = $item["curso"] ?? "";
-            $egresso["area"]     = $item["area_atuacao"] ?? "";
-            // No cadastro, "habilidades" é um texto separado por vírgula
-            $egresso["hard_skills"] = array_values(array_filter(array_map("trim", explode(",", $item["habilidades"] ?? ""))));
-            break;
-        }
-    }
+require_once __DIR__ . "/../../core/conexao.php";
+
+try {
+    $consulta = $pdo->prepare(
+        "SELECT nome, telefone, curso, area_atuacao, habilidades
+         FROM egressos
+         WHERE email = :email"
+    );
+    $consulta->execute(["email" => $_SESSION["email"]]);
+    $linha = $consulta->fetch(PDO::FETCH_ASSOC);
+} catch (PDOException $erro) {
+    $linha = false; // banco fora do ar: segue com os dados padrão
+}
+
+if ($linha !== false) {
+    $egresso["nome"]     = $linha["nome"];
+    $egresso["telefone"] = $linha["telefone"] ?? "";
+    $egresso["curso"]    = $linha["curso"] ?? "";
+    $egresso["area"]     = $linha["area_atuacao"] ?? "";
+    // "habilidades" é um texto separado por vírgula
+    $egresso["hard_skills"] = array_values(array_filter(
+        array_map("trim", explode(",", $linha["habilidades"] ?? ""))
+    ));
 }
 
 // Exemplo para visualizar o layout completo enquanto não há esses campos no cadastro
