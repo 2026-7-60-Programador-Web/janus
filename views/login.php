@@ -80,12 +80,12 @@ if (isset($_SESSION["email"])) {
     <form action="../controllers/login_processar.php" method="POST">
         <div class="form-group">
             <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" placeholder="seu@email.com" required autofocus>
+            <input type="email" id="email" name="email" value="cauan@email.com" placeholder="seu@email.com" required autofocus>
         </div>
         <div class="form-group">
             <label for="senha">Senha</label>
             <div class="campo-senha">
-                <input type="password" id="senha" name="senha" placeholder="••••••••" required>
+                <input type="password" id="senha" name="senha" value="12345abc" placeholder="••••••••" required>
                 <button type="button" id="toggleSenha" class="toggle-senha" aria-label="Mostrar senha">Mostrar</button>
             </div>
         </div>
