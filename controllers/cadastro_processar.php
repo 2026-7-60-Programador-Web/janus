@@ -4,7 +4,7 @@ require_once __DIR__ . '/../core/conexao.php';
 require_once __DIR__ . '/../config/config.php';
 
 $nome = trim($_POST['nome'] ?? '');
-$email = trim($_POST['email'] ?? '');
+$email = strtolower(trim($_POST['email'] ?? ''));
 $senha = $_POST['senha'] ?? '';
 $confirmarSenha = $_POST['confirmar_senha'] ?? '';
 
@@ -43,10 +43,11 @@ if ($stmt->fetch()) {
     exit;
 }
 
-$senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-
-$stmt = $pdo->prepare('INSERT INTO usuarios (nome, email, senha) VALUES (:nome, :email, :senha)');
-$stmt->execute(['nome' => $nome, 'email' => $email, 'senha' => $senhaHash]);
+// ALTERADO: senha salva exatamente como digitada (sem password_hash),
+// porque o login_processar.php compara a senha direto.
+// ALTERADO: o tipo é sempre "egresso" (nunca vem do formulário).
+$stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (:nome, :email, :senha, 'egresso')");
+$stmt->execute(['nome' => $nome, 'email' => $email, 'senha' => $senha]);
 
 unset($_SESSION['cadastro_dados']);
 $_SESSION['login_sucesso'] = 'Cadastro realizado com sucesso! Você já pode fazer login.';

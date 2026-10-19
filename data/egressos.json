@@ -1,0 +1,14 @@
+[
+    {
+        "id": "egr_6ad6a7b42bc1d2.93990395",
+        "nome": "Maria Carvalho",
+        "email": "maria@email.com",
+        "curso": "Administração",
+        "area_atuacao": "Administração",
+        "habilidades": "EXCEL",
+        "telefone": "99981202324",
+        "senha_hash": "$2y$10$FjAXsszWcU88qW06LyfbU.T19n0fqGlRRfWM1jK8EYlEnPW5IY0s2",
+        "tipo": "egresso",
+        "criado_em": "2026-10-20 01:28:52"
+    }
+]
