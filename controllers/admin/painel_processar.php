@@ -19,45 +19,12 @@ $egressosCadastrados = [
     ["nome" => "Camila Duarte",         "area" => "Design",        "curso" => "Design Gráfico",           "ano_formatura" => 2023, "email" => "camila.duarte@email.com",   "telefone" => "(99) 99999-0011", "instituicao" => "Senac", "sobre" => "Especialista em redes sociais e conteúdo visual.", "soft_skills" => ["Criatividade", "Comunicação"], "hard_skills" => ["Photoshop", "Canva"]],
 ];
 
-/**
- * Lê os egressos que se cadastraram pelo formulário (data/egressos.json)
- * e converte para o mesmo formato dos dados de exemplo acima.
- */
-function carregarEgressosDoCadastro(string $arquivo): array
-{
-    if (!is_file($arquivo)) {
-        return [];
-    }
-
-    $dados = json_decode((string) file_get_contents($arquivo), true);
-    if (!is_array($dados)) {
-        return [];
-    }
-
-    $lista = [];
-    foreach ($dados as $item) {
-        $habilidades = array_values(array_filter(array_map("trim", explode(",", $item["habilidades"] ?? ""))));
-
-        $lista[] = [
-            "nome"          => $item["nome"] ?? "",
-            "area"          => $item["area_atuacao"] ?? "",
-            "curso"         => $item["curso"] ?? "",
-            "ano_formatura" => "",
-            "email"         => $item["email"] ?? "",
-            "telefone"      => ($item["telefone"] ?? "") !== "" ? $item["telefone"] : "Não informado",
-            "instituicao"   => "",
-            "sobre"         => "",
-            "soft_skills"   => [],
-            "hard_skills"   => $habilidades,
-        ];
-    }
-
-    return $lista;
-}
+// Os egressos que se cadastraram pelo formulário vêm do banco de dados
+require_once __DIR__ . "/../../core/egresso_repositorio.php";
 
 $egressosCadastrados = array_merge(
     $egressosCadastrados,
-    carregarEgressosDoCadastro(__DIR__ . "/../../data/egressos.json")
+    egressoListarParaAdmin()
 );
 
 /**

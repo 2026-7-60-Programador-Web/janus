@@ -94,53 +94,63 @@ if (!empty($erros)) {
     voltarComErros($erros, $antigos);
 }
 
-// ---- Persistência em arquivo JSON (troque por banco quando tiver um) ----
-$pasta   = __DIR__ . "/../../data";
-$arquivo = $pasta . "/egressos.json";
+// ---- Persistência no banco de dados ----
+require_once __DIR__ . "/../../core/egresso_repositorio.php";
 
-if (!is_dir($pasta) && !mkdir($pasta, 0755, true)) {
-    voltarComErros(["geral" => "Não foi possível salvar o cadastro. Tente novamente."], $antigos);
-}
+try {
+    $pdo = egressoConexao();
 
-$fp = fopen($arquivo, "c+");
-if ($fp === false || !flock($fp, LOCK_EX)) {
-    voltarComErros(["geral" => "Não foi possível salvar o cadastro. Tente novamente."], $antigos);
-}
-
-$conteudo = stream_get_contents($fp);
-$egressos = $conteudo !== "" ? json_decode($conteudo, true) : [];
-if (!is_array($egressos)) {
-    $egressos = [];
-}
-
-// E-mail não pode repetir
-foreach ($egressos as $egresso) {
-    if (($egresso["email"] ?? "") === $emailBruto) {
-        flock($fp, LOCK_UN);
-        fclose($fp);
+    // E-mail não pode repetir
+    $stmt = $pdo->prepare("SELECT id FROM egressos WHERE email = :email");
+    $stmt->execute([":email" => $emailBruto]);
+    if ($stmt->fetch()) {
         voltarComErros(["email" => "Este e-mail já está cadastrado."], $antigos);
     }
+
+    $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO egressos (nome, email, senha_hash, telefone, curso, area_atuacao)
+         VALUES (:nome, :email, :senha_hash, :telefone, :curso, :area_atuacao)"
+    );
+    $stmt->execute([
+        ":nome"         => $nome,
+        ":email"        => $emailBruto,
+        ":senha_hash"   => password_hash($senha, PASSWORD_DEFAULT),
+        ":telefone"     => $telefoneDigitos,
+        ":curso"        => $curso,
+        ":area_atuacao" => $area,
+    ]);
+    $egressoId = (int) $pdo->lastInsertId();
+
+    // As habilidades do cadastro (texto separado por vírgula) viram hard skills
+    $stmt  = $pdo->prepare("INSERT INTO egresso_habilidades (egresso_id, tipo, nome) VALUES (:id, 'hard', :nome)");
+    $vistas = [];
+    foreach (explode(",", $habilidades) as $habilidade) {
+        $habilidade = mb_substr(trim($habilidade), 0, 80);
+        $chave      = mb_strtolower($habilidade);
+
+        if ($habilidade === "" || isset($vistas[$chave])) {
+            continue;
+        }
+
+        $vistas[$chave] = true;
+        $stmt->execute([":id" => $egressoId, ":nome" => $habilidade]);
+    }
+
+    $pdo->commit();
+} catch (PDOException $e) {
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    // 23000 = violação de chave única (e-mail repetido)
+    if ($e->getCode() === "23000") {
+        voltarComErros(["email" => "Este e-mail já está cadastrado."], $antigos);
+    }
+
+    voltarComErros(["geral" => "Não foi possível salvar o cadastro. Tente novamente."], $antigos);
 }
-
-$egressos[] = [
-    "id"           => uniqid("egr_", true),
-    "nome"         => $nome,
-    "email"        => $emailBruto,
-    "curso"        => $curso,
-    "area_atuacao" => $area,
-    "habilidades"  => $habilidades,
-    "telefone"     => $telefoneDigitos,
-    "senha_hash"   => password_hash($senha, PASSWORD_DEFAULT),
-    "tipo"         => "egresso",
-    "criado_em"    => date("Y-m-d H:i:s"),
-];
-
-ftruncate($fp, 0);
-rewind($fp);
-fwrite($fp, json_encode($egressos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-fflush($fp);
-flock($fp, LOCK_UN);
-fclose($fp);
 
 $_SESSION["sucesso"] = "Cadastro realizado com sucesso! Faça login para entrar.";
 header("Location: ../../views/login.php");

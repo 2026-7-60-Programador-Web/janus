@@ -93,6 +93,7 @@ if (isset($_SESSION["email"])) {
     </form>
 
     <p class="footer-note">Não tem cadastro ainda? <a href="egresso/cadastro.php">Cadastre-se</a></p>
+    <p class="footer-note"><a href="sobre.php">Conheça o Janus</a></p>
 </div>
 
 <script src="../assets/js/login.js"></script>

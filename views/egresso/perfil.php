@@ -8,52 +8,52 @@ if (!isset($_SESSION["email"]) || ($_SESSION["tipo"] ?? "") === "administrador")
     exit;
 }
 
-// ---- Dados do egresso ----
-// Tenta achar o egresso logado no JSON do cadastro; se não achar, usa dados de exemplo
-// só para a tela aparecer preenchida (troque pela consulta ao banco depois).
-$egresso = [
-    "nome"        => $_SESSION["nome"] ?? "Egresso Janus",
-    "email"       => $_SESSION["email"],
-    "telefone"    => "",
-    "curso"       => "",
-    "area"        => "",
-    "bio"         => "",
-    "soft_skills" => [],
-    "hard_skills" => [],
-    "formacoes"   => [],
+require_once __DIR__ . "/../../core/egresso_repositorio.php";
+
+// ---- Dados do egresso (banco de dados) ----
+$egresso    = null;
+$erroBanco  = null;
+
+try {
+    $egresso = egressoBuscarPorEmail($_SESSION["email"]);
+} catch (PDOException $e) {
+    $erroBanco = "Não foi possível carregar o perfil agora. Detalhe do banco: " . $e->getMessage();
+}
+
+if ($egresso !== null) {
+    $egresso["area"] = $egresso["area_atuacao"];
+    $egresso["bio"]  = (string) ($egresso["bio"] ?? "");
+}
+
+// ---- Mensagens e dados devolvidos pelo controller ----
+$sucesso      = $_SESSION["perfil_sucesso"] ?? null;
+$errosPerfil  = $_SESSION["perfil_erros"] ?? [];
+$antigos      = $_SESSION["perfil_antigos"] ?? null;
+unset($_SESSION["perfil_sucesso"], $_SESSION["perfil_erros"], $_SESSION["perfil_antigos"]);
+
+// Valores do formulário de edição: o que o banco tem, ou o que a pessoa digitou se deu erro
+$form = [
+    "email"     => $egresso["email"] ?? "",
+    "telefone"  => $egresso["telefone"] ?? "",
+    "bio"       => $egresso["bio"] ?? "",
+    "soft"      => $egresso["soft_skills"] ?? [],
+    "hard"      => $egresso["hard_skills"] ?? [],
+    "formacoes" => $egresso["formacoes"] ?? [],
 ];
-
-$arquivo = __DIR__ . "/../../data/egressos.json";
-if (file_exists($arquivo)) {
-    foreach ((array) json_decode(file_get_contents($arquivo), true) as $item) {
-        if (($item["email"] ?? "") === $_SESSION["email"]) {
-            $egresso["nome"]     = $item["nome"] ?? $egresso["nome"];
-            $egresso["telefone"] = $item["telefone"] ?? "";
-            $egresso["curso"]    = $item["curso"] ?? "";
-            $egresso["area"]     = $item["area_atuacao"] ?? "";
-            // No cadastro, "habilidades" é um texto separado por vírgula
-            $egresso["hard_skills"] = array_values(array_filter(array_map("trim", explode(",", $item["habilidades"] ?? ""))));
-            break;
-        }
-    }
+if (is_array($antigos)) {
+    $form = array_merge($form, $antigos);
 }
+$abrirEdicao = is_array($antigos) && $egresso !== null;
 
-// Exemplo para visualizar o layout completo enquanto não há esses campos no cadastro
-if (empty($egresso["bio"]) && empty($egresso["soft_skills"]) && empty($egresso["formacoes"])) {
-    $egresso["bio"] = "Egresso em busca de oportunidades na área de tecnologia. Gosto de aprender rápido e trabalhar em equipe.";
-    $egresso["soft_skills"] = ["Comunicação", "Organização", "Trabalho em equipe"];
-    if (empty($egresso["hard_skills"])) {
-        $egresso["hard_skills"] = ["PHP", "HTML", "CSS", "JavaScript"];
-    }
-    $egresso["formacoes"] = [
-        ["curso" => $egresso["curso"] ?: "Desenvolvimento de Sistemas", "instituicao" => "SENAI", "ano" => "2026"],
-    ];
-}
+$estadoJs = json_encode(
+    ["soft" => array_values($form["soft"]), "hard" => array_values($form["hard"]), "formacoes" => array_values($form["formacoes"])],
+    JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+);
 
 // ---- Helpers ----
-function e(string $texto): string
+function e($texto): string
 {
-    return htmlspecialchars($texto, ENT_QUOTES, "UTF-8");
+    return htmlspecialchars((string) $texto, ENT_QUOTES, "UTF-8");
 }
 
 function formatarTelefone(string $telefone): string
@@ -78,10 +78,12 @@ function iniciais(string $nome): string
     return mb_strtoupper($ini);
 }
 
+$nomeExibicao = $egresso["nome"] ?? ($_SESSION["nome"] ?? "Egresso");
+
 $formacaoPrincipal = $egresso["formacoes"][0] ?? null;
 $subtitulo = $formacaoPrincipal
     ? $formacaoPrincipal["curso"] . " — " . $formacaoPrincipal["instituicao"]
-    : ($egresso["curso"] ?: "Formação não informada");
+    : (($egresso["curso"] ?? "") ?: "Formação não informada");
 
 ?>
 <!DOCTYPE html>
@@ -171,6 +173,14 @@ $subtitulo = $formacaoPrincipal
         .upload-button input { display: none; }
         .formacao-list { list-style: none; margin-top: 10px; font-size: 14px; }
         .formacao-list li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        /* Alertas e botões de remover */
+        .alerta { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+        .alerta ul { margin: 0; padding-left: 18px; }
+        .alerta-sucesso { background: #e3f3f0; color: #1f6f63; border: 1px solid #b9e0d9; }
+        .alerta-erro { background: #fdecea; color: #9b2c2c; border: 1px solid #f5c6c2; }
+        .chip-remover { border: none; background: transparent; color: inherit; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 0 0 4px; font-family: inherit; }
+        .formacao-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .formacao-remover { border: none; background: transparent; color: #9b2c2c; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
         [hidden] { display: none !important; }
 
         /* ===== Responsivo ===== */
@@ -217,6 +227,7 @@ $subtitulo = $formacaoPrincipal
         <nav class="app-header-right janus-nav egresso-nav" id="menu-egresso" aria-label="Navegação principal">
             <a href="painel.php"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg></span><span>Início</span></a>
             <a href="perfil.php" class="ativo"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span>Meu perfil</span></a>
+            <a href="../sobre.php"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg></span><span>Sobre o Janus</span></a>
             <a href="../../controllers/logout.php" class="sair-link"><span class="nav-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-5"/></svg></span><span>Sair</span></a>
         </nav>
         <button type="button" class="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-egresso"><span></span><span></span><span></span></button>
@@ -226,6 +237,35 @@ $subtitulo = $formacaoPrincipal
 <main class="app-main">
     <div class="wrap">
         <div class="app-card">
+
+            <?php if ($sucesso): ?>
+                <div class="alerta alerta-sucesso"><?php echo e($sucesso); ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($errosPerfil)): ?>
+                <div class="alerta alerta-erro">
+                    <ul>
+                        <?php foreach ($errosPerfil as $erro): ?>
+                            <li><?php echo e($erro); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($egresso === null): ?>
+                <div class="profile-head">
+                    <span class="avatar"><?php echo e(iniciais($nomeExibicao)); ?></span>
+                    <div>
+                        <h1><?php echo e($nomeExibicao); ?></h1>
+                        <p><?php echo e($_SESSION["email"]); ?></p>
+                    </div>
+                </div>
+                <p class="vazio">
+                    <?php echo $erroBanco !== null
+                        ? e($erroBanco)
+                        : "Este é um usuário de teste e não tem perfil salvo no banco. Cadastre-se como egresso para ter um perfil editável."; ?>
+                </p>
+            <?php else: ?>
 
             <!-- ===== MODO VISUALIZAÇÃO ===== -->
             <div id="perfil-visualizacao">
@@ -283,10 +323,10 @@ $subtitulo = $formacaoPrincipal
                 <button type="button" class="button button-primary" id="editar-perfil-btn" style="margin-top: 24px;">Editar meu perfil</button>
             </div>
 
-            <!-- ===== MODO EDIÇÃO (só visual, ainda sem processamento) ===== -->
-            <form id="perfil-edicao" hidden novalidate>
+            <!-- ===== MODO EDIÇÃO ===== -->
+            <form id="perfil-edicao" action="../../controllers/egresso/perfil_processar.php" method="POST" <?php echo $abrirEdicao ? "" : "hidden"; ?> novalidate>
                 <div class="field profile-photo-upload">
-                    <span class="avatar"><?php echo e(iniciais($egresso["nome"])); ?></span>
+                    <span class="avatar"><?php echo e(iniciais($nomeExibicao)); ?></span>
                     <label class="upload-button">
                         <input type="file" accept="image/*">
                         <span>Escolher foto (opcional)</span>
@@ -295,84 +335,215 @@ $subtitulo = $formacaoPrincipal
 
                 <div class="field">
                     <label for="perfil-email-input">E-mail</label>
-                    <input type="email" id="perfil-email-input" name="email" value="<?php echo e($egresso["email"]); ?>" placeholder="seu.nome@exemplo.com">
+                    <input type="email" id="perfil-email-input" name="email" value="<?php echo e($form["email"]); ?>" placeholder="seu.nome@exemplo.com">
                 </div>
 
                 <div class="field">
                     <label for="perfil-telefone-input">Telefone (com DDD)</label>
-                    <input type="tel" id="perfil-telefone-input" name="telefone" value="<?php echo e(formatarTelefone($egresso["telefone"])); ?>" placeholder="(99) 99999-9999">
+                    <input type="tel" id="perfil-telefone-input" name="telefone" value="<?php echo e(formatarTelefone((string) $form["telefone"])); ?>" placeholder="(99) 99999-9999">
                 </div>
 
                 <div class="field">
                     <label for="perfil-bio-input">Sobre você</label>
-                    <textarea id="perfil-bio-input" name="bio" rows="4" placeholder="Conte um pouco sobre sua trajetória e o que procura"><?php echo e($egresso["bio"]); ?></textarea>
+                    <textarea id="perfil-bio-input" name="bio" rows="4" maxlength="1000" placeholder="Conte um pouco sobre sua trajetória e o que procura"><?php echo e($form["bio"]); ?></textarea>
                 </div>
 
                 <div class="field">
                     <label for="perfil-soft-input">Soft skills</label>
                     <div class="field-inline">
-                        <input type="text" id="perfil-soft-input" placeholder="Ex: Organização">
-                        <button type="button" class="button button-secondary btn-pequeno">Adicionar</button>
+                        <input type="text" id="perfil-soft-input" maxlength="60" placeholder="Ex: Organização">
+                        <button type="button" class="button button-secondary btn-pequeno" id="add-soft-btn">Adicionar</button>
                     </div>
-                    <div class="chip-list">
-                        <?php foreach ($egresso["soft_skills"] as $skill): ?>
-                            <span class="chip chip-teal"><?php echo e($skill); ?></span>
-                        <?php endforeach; ?>
-                    </div>
+                    <div class="chip-list" id="lista-soft"></div>
                 </div>
 
                 <div class="field">
                     <label for="perfil-hard-input">Hard skills</label>
                     <div class="field-inline">
-                        <input type="text" id="perfil-hard-input" placeholder="Ex: JavaScript">
-                        <button type="button" class="button button-secondary btn-pequeno">Adicionar</button>
+                        <input type="text" id="perfil-hard-input" maxlength="60" placeholder="Ex: JavaScript">
+                        <button type="button" class="button button-secondary btn-pequeno" id="add-hard-btn">Adicionar</button>
                     </div>
-                    <div class="chip-list">
-                        <?php foreach ($egresso["hard_skills"] as $skill): ?>
-                            <span class="chip chip-info"><?php echo e($skill); ?></span>
-                        <?php endforeach; ?>
-                    </div>
+                    <div class="chip-list" id="lista-hard"></div>
                 </div>
 
                 <div class="field">
                     <span class="field-label">Formação</span>
                     <div class="formacao-inputs">
-                        <input type="text" placeholder="Curso">
-                        <input type="text" placeholder="Instituição">
-                        <input type="text" placeholder="Ano">
+                        <input type="text" id="formacao-curso" maxlength="120" placeholder="Curso">
+                        <input type="text" id="formacao-instituicao" maxlength="120" placeholder="Instituição">
+                        <input type="text" id="formacao-ano" maxlength="4" inputmode="numeric" placeholder="Ano">
                     </div>
-                    <button type="button" class="button button-secondary btn-pequeno">Adicionar formação</button>
-                    <ul class="formacao-list">
-                        <?php foreach ($egresso["formacoes"] as $f): ?>
-                            <li><?php echo e($f["curso"]); ?> — <?php echo e($f["instituicao"]); ?><?php echo !empty($f["ano"]) ? " (" . e($f["ano"]) . ")" : ""; ?></li>
-                        <?php endforeach; ?>
-                    </ul>
+                    <button type="button" class="button button-secondary btn-pequeno" id="add-formacao-btn">Adicionar formação</button>
+                    <ul class="formacao-list" id="lista-formacoes"></ul>
                 </div>
+
+                <!-- O JavaScript preenche estes campos escondidos na hora de salvar -->
+                <div id="campos-ocultos"></div>
 
                 <button type="submit" class="button button-primary">Salvar perfil</button>
                 <button type="button" class="button button-secondary" id="cancelar-edicao-btn" style="margin-top: 10px;">Cancelar</button>
             </form>
 
+            <?php endif; ?>
+
         </div>
     </div>
 </main>
 
+<?php if ($egresso !== null): ?>
 <script>
-    // Só alterna entre visualizar e editar, para você conseguir ver as duas telas.
-    // Os botões de salvar/adicionar ainda não fazem nada.
     const visualizacao = document.getElementById("perfil-visualizacao");
     const edicao = document.getElementById("perfil-edicao");
 
+    // Listas que o formulário envia: soft skills, hard skills e formações
+    const estado = <?php echo $estadoJs; ?>;
+
+    // ---- Alternar entre visualizar e editar ----
     document.getElementById("editar-perfil-btn").addEventListener("click", () => {
         visualizacao.hidden = true;
         edicao.hidden = false;
     });
+    // Cancelar recarrega a página: descarta o que não foi salvo
     document.getElementById("cancelar-edicao-btn").addEventListener("click", () => {
-        edicao.hidden = true;
-        visualizacao.hidden = false;
+        window.location.href = "perfil.php";
     });
-    edicao.addEventListener("submit", (e) => e.preventDefault());
+    <?php if ($abrirEdicao): ?>
+    visualizacao.hidden = true;
+    <?php endif; ?>
+
+    // ---- Skills ----
+    function desenharSkills(tipo) {
+        const lista = document.getElementById("lista-" + tipo);
+        lista.innerHTML = "";
+
+        estado[tipo].forEach((nome, i) => {
+            const chip = document.createElement("span");
+            chip.className = "chip " + (tipo === "soft" ? "chip-teal" : "chip-info");
+            chip.textContent = nome;
+
+            const remover = document.createElement("button");
+            remover.type = "button";
+            remover.className = "chip-remover";
+            remover.textContent = "×";
+            remover.setAttribute("aria-label", "Remover " + nome);
+            remover.addEventListener("click", () => {
+                estado[tipo].splice(i, 1);
+                desenharSkills(tipo);
+            });
+
+            chip.appendChild(remover);
+            lista.appendChild(chip);
+        });
+    }
+
+    function adicionarSkill(tipo) {
+        const campo = document.getElementById("perfil-" + tipo + "-input");
+        const nome = campo.value.trim();
+        if (nome === "") return;
+
+        const jaExiste = estado[tipo].some((s) => s.toLowerCase() === nome.toLowerCase());
+        if (!jaExiste && estado[tipo].length < 30) {
+            estado[tipo].push(nome);
+            desenharSkills(tipo);
+        }
+
+        campo.value = "";
+        campo.focus();
+    }
+
+    ["soft", "hard"].forEach((tipo) => {
+        document.getElementById("add-" + tipo + "-btn").addEventListener("click", () => adicionarSkill(tipo));
+        // Enter no campo adiciona a skill em vez de enviar o formulário
+        document.getElementById("perfil-" + tipo + "-input").addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") {
+                ev.preventDefault();
+                adicionarSkill(tipo);
+            }
+        });
+        desenharSkills(tipo);
+    });
+
+    // ---- Formações ----
+    function desenharFormacoes() {
+        const lista = document.getElementById("lista-formacoes");
+        lista.innerHTML = "";
+
+        estado.formacoes.forEach((f, i) => {
+            const item = document.createElement("li");
+
+            const texto = document.createElement("span");
+            texto.textContent = f.curso + " — " + f.instituicao + (f.ano ? " (" + f.ano + ")" : "");
+
+            const remover = document.createElement("button");
+            remover.type = "button";
+            remover.className = "formacao-remover";
+            remover.textContent = "Remover";
+            remover.addEventListener("click", () => {
+                estado.formacoes.splice(i, 1);
+                desenharFormacoes();
+            });
+
+            item.appendChild(texto);
+            item.appendChild(remover);
+            lista.appendChild(item);
+        });
+    }
+
+    // Devolve true se adicionou (ou se não havia nada preenchido)
+    function adicionarFormacao() {
+        const curso = document.getElementById("formacao-curso");
+        const instituicao = document.getElementById("formacao-instituicao");
+        const ano = document.getElementById("formacao-ano");
+
+        if (curso.value.trim() === "" || instituicao.value.trim() === "") {
+            return false;
+        }
+
+        if (estado.formacoes.length < 10) {
+            estado.formacoes.push({
+                curso: curso.value.trim(),
+                instituicao: instituicao.value.trim(),
+                ano: ano.value.trim(),
+            });
+            desenharFormacoes();
+        }
+
+        curso.value = "";
+        instituicao.value = "";
+        ano.value = "";
+        curso.focus();
+        return true;
+    }
+
+    document.getElementById("add-formacao-btn").addEventListener("click", adicionarFormacao);
+    desenharFormacoes();
+
+    // ---- Salvar: inclui o que ficou digitado e monta os campos que vão pro PHP ----
+    edicao.addEventListener("submit", () => {
+        ["soft", "hard"].forEach((tipo) => adicionarSkill(tipo));
+        adicionarFormacao();
+
+        const area = document.getElementById("campos-ocultos");
+        area.innerHTML = "";
+
+        const criar = (nome, valor) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = nome;
+            input.value = valor;
+            area.appendChild(input);
+        };
+
+        estado.soft.forEach((nome) => criar("soft_skills[]", nome));
+        estado.hard.forEach((nome) => criar("hard_skills[]", nome));
+        estado.formacoes.forEach((f) => {
+            criar("formacao_curso[]", f.curso);
+            criar("formacao_instituicao[]", f.instituicao);
+            criar("formacao_ano[]", f.ano || "");
+        });
+    });
 </script>
+<?php endif; ?>
 
 </body>
 </html>

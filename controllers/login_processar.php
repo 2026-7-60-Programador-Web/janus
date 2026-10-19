@@ -67,26 +67,25 @@ foreach ($usuariosCadastrados as $usuario) {
     }
 }
 
-// 2) Egressos que se cadastraram pelo formulário (data/egressos.json, senha com hash)
+// 2) Egressos que se cadastraram pelo formulário (banco de dados, senha com hash)
 if ($usuarioEncontrado === null) {
-    $arquivo = __DIR__ . "/../data/egressos.json";
+    require_once __DIR__ . "/../core/egresso_repositorio.php";
 
-    if (is_file($arquivo)) {
-        $egressos = json_decode((string) file_get_contents($arquivo), true);
+    try {
+        $pdo  = egressoConexao();
+        $stmt = $pdo->prepare("SELECT nome, email, senha_hash FROM egressos WHERE email = :email");
+        $stmt->execute([":email" => $email]);
+        $egresso = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        foreach ((array) $egressos as $egresso) {
-            if (
-                ($egresso["email"] ?? "") === $email
-                && password_verify($senha, $egresso["senha_hash"] ?? "")
-            ) {
-                $usuarioEncontrado = [
-                    "nome"  => $egresso["nome"] ?? "Egresso",
-                    "email" => $egresso["email"],
-                    "tipo"  => "egresso",
-                ];
-                break;
-            }
+        if ($egresso && password_verify($senha, $egresso["senha_hash"])) {
+            $usuarioEncontrado = [
+                "nome"  => $egresso["nome"],
+                "email" => $egresso["email"],
+                "tipo"  => "egresso",
+            ];
         }
+    } catch (PDOException $e) {
+        voltarComErro("Erro ao entrar: não foi possível acessar o banco de dados.");
     }
 }
 
