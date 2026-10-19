@@ -1,0 +1,14 @@
+[
+    {
+        "id": "egr_6ad69708572f93.59383934",
+        "nome": "Guilherme henrique",
+        "email": "guilhermehenrique@email.com",
+        "curso": "programador web",
+        "area_atuacao": "desenvolvimento web",
+        "habilidades": "HTML, CSS",
+        "telefone": "9998456789",
+        "senha_hash": "$2y$10$kSip83a6JMVxjS\/hSjkLMuD8Ch5ITzQAWBPLD7iXs20KJUc9gMPWm",
+        "tipo": "egresso",
+        "criado_em": "2026-10-20 00:17:44"
+    }
+]

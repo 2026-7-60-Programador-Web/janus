@@ -8,9 +8,9 @@ if (!isset($_SESSION["email"]) || ($_SESSION["tipo"] ?? "") === "administrador")
     exit;
 }
 
-// ---- Dados do egresso ----
-// Tenta achar o egresso logado no JSON do cadastro; se não achar, usa dados de exemplo
-// só para a tela aparecer preenchida (troque pela consulta ao banco depois).
+// ---- Dados do egresso (vêm do banco via PDO) ----
+require_once __DIR__ . "/../../config/conexao.php";
+
 $egresso = [
     "nome"        => $_SESSION["nome"] ?? "Egresso Janus",
     "email"       => $_SESSION["email"],
@@ -23,31 +23,34 @@ $egresso = [
     "formacoes"   => [],
 ];
 
-$arquivo = __DIR__ . "/../../data/egressos.json";
-if (file_exists($arquivo)) {
-    foreach ((array) json_decode(file_get_contents($arquivo), true) as $item) {
-        if (($item["email"] ?? "") === $_SESSION["email"]) {
-            $egresso["nome"]     = $item["nome"] ?? $egresso["nome"];
-            $egresso["telefone"] = $item["telefone"] ?? "";
-            $egresso["curso"]    = $item["curso"] ?? "";
-            $egresso["area"]     = $item["area_atuacao"] ?? "";
-            // No cadastro, "habilidades" é um texto separado por vírgula
-            $egresso["hard_skills"] = array_values(array_filter(array_map("trim", explode(",", $item["habilidades"] ?? ""))));
-            break;
-        }
-    }
-}
+try {
+    $pdo = conectar();
 
-// Exemplo para visualizar o layout completo enquanto não há esses campos no cadastro
-if (empty($egresso["bio"]) && empty($egresso["soft_skills"]) && empty($egresso["formacoes"])) {
-    $egresso["bio"] = "Egresso em busca de oportunidades na área de tecnologia. Gosto de aprender rápido e trabalhar em equipe.";
-    $egresso["soft_skills"] = ["Comunicação", "Organização", "Trabalho em equipe"];
-    if (empty($egresso["hard_skills"])) {
-        $egresso["hard_skills"] = ["PHP", "HTML", "CSS", "JavaScript"];
+    $stmt = $pdo->prepare("SELECT * FROM egressos WHERE email = :email LIMIT 1");
+    $stmt->execute([":email" => $_SESSION["email"]]);
+    $linha = $stmt->fetch();
+
+    if ($linha) {
+        $egresso["nome"]     = $linha["nome"];
+        $egresso["telefone"] = $linha["telefone"] ?? "";
+        $egresso["curso"]    = $linha["curso"] ?? "";
+        $egresso["area"]     = $linha["area_atuacao"] ?? "";
+        $egresso["bio"]      = $linha["bio"] ?? "";
+
+        $stmt = $pdo->prepare("SELECT tipo, nome FROM egresso_skills WHERE egresso_id = :id ORDER BY nome");
+        $stmt->execute([":id" => $linha["id"]]);
+        foreach ($stmt as $skill) {
+            $egresso[$skill["tipo"] === "soft" ? "soft_skills" : "hard_skills"][] = $skill["nome"];
+        }
+
+        $stmt = $pdo->prepare("SELECT curso, instituicao, ano FROM egresso_formacoes WHERE egresso_id = :id ORDER BY ano DESC");
+        $stmt->execute([":id" => $linha["id"]]);
+        $egresso["formacoes"] = $stmt->fetchAll();
     }
-    $egresso["formacoes"] = [
-        ["curso" => $egresso["curso"] ?: "Desenvolvimento de Sistemas", "instituicao" => "SENAI", "ano" => "2026"],
-    ];
+} catch (PDOException $erro) {
+    // Em produção, grave em log e não mostre detalhes ao usuário
+    error_log("Erro no perfil: " . $erro->getMessage());
+    $erroBanco = "Não foi possível carregar seu perfil agora.";
 }
 
 // ---- Helpers ----
@@ -226,6 +229,10 @@ $subtitulo = $formacaoPrincipal
 <main class="app-main">
     <div class="wrap">
         <div class="app-card">
+
+            <?php if (!empty($erroBanco)): ?>
+                <p class="vazio" style="margin-bottom:16px;"><?php echo e($erroBanco); ?></p>
+            <?php endif; ?>
 
             <!-- ===== MODO VISUALIZAÇÃO ===== -->
             <div id="perfil-visualizacao">
