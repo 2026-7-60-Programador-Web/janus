@@ -120,8 +120,21 @@ if ($telefone === "") {
 }
 
 // Bio
-if (mb_strlen($bio) > 1000) {
+if ($bio === "") {
+    $erros[] = "Preencha o campo \"Sobre você\".";
+} elseif (mb_strlen($bio) > 1000) {
     $erros[] = "O texto \"Sobre você\" pode ter no máximo 1000 caracteres.";
+}
+
+// Listas obrigatórias
+if (empty($soft)) {
+    $erros[] = "Adicione pelo menos uma soft skill.";
+}
+if (empty($hard)) {
+    $erros[] = "Adicione pelo menos uma hard skill.";
+}
+if (empty($formacoes)) {
+    $erros[] = "Adicione pelo menos uma formação.";
 }
 
 if (!empty($erros)) {

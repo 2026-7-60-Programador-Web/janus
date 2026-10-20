@@ -181,6 +181,7 @@ function erroCampo(array $erros, string $campo): void
             <div class="form-group">
                 <label for="confirmar_senha">Confirmar senha</label>
                 <input type="password" id="confirmar_senha" name="confirmar_senha" placeholder="Repita a senha" required minlength="8"
+                       data-igual-a="senha" data-msg-igual="As senhas não coincidem."
                        class="<?php echo isset($erros["confirmar_senha"]) ? "campo-invalido" : ""; ?>">
                 <?php erroCampo($erros, "confirmar_senha"); ?>
             </div>
@@ -191,6 +192,8 @@ function erroCampo(array $erros, string $campo): void
 
     <p class="link-voltar">Já tem cadastro? <a href="../login.php">Entrar</a></p>
 </div>
+
+<script src="../../assets/js/validacao-form.js"></script>
 
 </body>
 </html>

@@ -335,17 +335,17 @@ $subtitulo = $formacaoPrincipal
 
                 <div class="field">
                     <label for="perfil-email-input">E-mail</label>
-                    <input type="email" id="perfil-email-input" name="email" value="<?php echo e($form["email"]); ?>" placeholder="seu.nome@exemplo.com">
+                    <input type="email" id="perfil-email-input" name="email" required value="<?php echo e($form["email"]); ?>" placeholder="seu.nome@exemplo.com">
                 </div>
 
                 <div class="field">
                     <label for="perfil-telefone-input">Telefone (com DDD)</label>
-                    <input type="tel" id="perfil-telefone-input" name="telefone" value="<?php echo e(formatarTelefone((string) $form["telefone"])); ?>" placeholder="(99) 99999-9999">
+                    <input type="tel" id="perfil-telefone-input" name="telefone" required value="<?php echo e(formatarTelefone((string) $form["telefone"])); ?>" placeholder="(99) 99999-9999">
                 </div>
 
                 <div class="field">
                     <label for="perfil-bio-input">Sobre você</label>
-                    <textarea id="perfil-bio-input" name="bio" rows="4" maxlength="1000" placeholder="Conte um pouco sobre sua trajetória e o que procura"><?php echo e($form["bio"]); ?></textarea>
+                    <textarea id="perfil-bio-input" name="bio" rows="4" maxlength="1000" required placeholder="Conte um pouco sobre sua trajetória e o que procura"><?php echo e($form["bio"]); ?></textarea>
                 </div>
 
                 <div class="field">
@@ -391,12 +391,18 @@ $subtitulo = $formacaoPrincipal
 </main>
 
 <?php if ($egresso !== null): ?>
+<script src="../../assets/js/validacao-form.js"></script>
 <script>
     const visualizacao = document.getElementById("perfil-visualizacao");
     const edicao = document.getElementById("perfil-edicao");
 
     // Listas que o formulário envia: soft skills, hard skills e formações
     const estado = <?php echo $estadoJs; ?>;
+
+    // Quais listas são obrigatórias (true = precisa ter pelo menos 1 item). Mude para false para deixar opcional.
+    const OBRIGATORIOS = { soft: true, hard: true, formacao: true };
+    const NOMES_SKILL = { soft: "soft skill", hard: "hard skill" };
+    const ANO_MAXIMO = new Date().getFullYear() + 6;
 
     // ---- Alternar entre visualizar e editar ----
     document.getElementById("editar-perfil-btn").addEventListener("click", () => {
@@ -410,6 +416,23 @@ $subtitulo = $formacaoPrincipal
     <?php if ($abrirEdicao): ?>
     visualizacao.hidden = true;
     <?php endif; ?>
+
+    // ---- Avisos de erro nos campos que não são validados pelo validacao-form.js ----
+    function limparErroLista(campo) {
+        campo.classList.remove("campo-invalido");
+        document.querySelectorAll('.erro-campo[data-para="' + campo.id + '"]').forEach((aviso) => aviso.remove());
+    }
+
+    function mostrarErroLista(campo, mensagem) {
+        limparErroLista(campo);
+        campo.classList.add("campo-invalido");
+
+        const aviso = document.createElement("span");
+        aviso.className = "erro-campo";
+        aviso.dataset.para = campo.id;
+        aviso.textContent = mensagem;
+        campo.closest(".field").appendChild(aviso);
+    }
 
     // ---- Skills ----
     function desenharSkills(tipo) {
@@ -436,34 +459,49 @@ $subtitulo = $formacaoPrincipal
         });
     }
 
-    function adicionarSkill(tipo) {
+    // avisar = true quando a pessoa clicou em "Adicionar" (mostra o motivo se não der)
+    function adicionarSkill(tipo, avisar) {
         const campo = document.getElementById("perfil-" + tipo + "-input");
         const nome = campo.value.trim();
-        if (nome === "") return;
+        limparErroLista(campo);
 
-        const jaExiste = estado[tipo].some((s) => s.toLowerCase() === nome.toLowerCase());
-        if (!jaExiste && estado[tipo].length < 30) {
-            estado[tipo].push(nome);
-            desenharSkills(tipo);
+        if (nome === "") {
+            if (avisar) mostrarErroLista(campo, "Digite uma " + NOMES_SKILL[tipo] + " antes de adicionar.");
+            return false;
+        }
+        if (estado[tipo].some((s) => s.toLowerCase() === nome.toLowerCase())) {
+            if (avisar) mostrarErroLista(campo, "Essa " + NOMES_SKILL[tipo] + " já foi adicionada.");
+            return false;
+        }
+        if (estado[tipo].length >= 30) {
+            if (avisar) mostrarErroLista(campo, "Limite de 30 itens atingido.");
+            return false;
         }
 
+        estado[tipo].push(nome);
+        desenharSkills(tipo);
         campo.value = "";
         campo.focus();
+        return true;
     }
 
     ["soft", "hard"].forEach((tipo) => {
-        document.getElementById("add-" + tipo + "-btn").addEventListener("click", () => adicionarSkill(tipo));
+        document.getElementById("add-" + tipo + "-btn").addEventListener("click", () => adicionarSkill(tipo, true));
         // Enter no campo adiciona a skill em vez de enviar o formulário
         document.getElementById("perfil-" + tipo + "-input").addEventListener("keydown", (ev) => {
             if (ev.key === "Enter") {
                 ev.preventDefault();
-                adicionarSkill(tipo);
+                adicionarSkill(tipo, true);
             }
         });
         desenharSkills(tipo);
     });
 
     // ---- Formações ----
+    const campoCurso = document.getElementById("formacao-curso");
+    const campoInstituicao = document.getElementById("formacao-instituicao");
+    const campoAno = document.getElementById("formacao-ano");
+
     function desenharFormacoes() {
         const lista = document.getElementById("lista-formacoes");
         lista.innerHTML = "";
@@ -489,57 +527,114 @@ $subtitulo = $formacaoPrincipal
         });
     }
 
-    // Devolve true se adicionou (ou se não havia nada preenchido)
-    function adicionarFormacao() {
-        const curso = document.getElementById("formacao-curso");
-        const instituicao = document.getElementById("formacao-instituicao");
-        const ano = document.getElementById("formacao-ano");
+    // Confere o que está digitado nos três campos da formação.
+    // Devolve null (tudo certo), { vazio: true } (nada digitado) ou { campo, msg } (erro).
+    function erroDaFormacaoDigitada() {
+        const curso = campoCurso.value.trim();
+        const instituicao = campoInstituicao.value.trim();
+        const ano = campoAno.value.trim();
 
-        if (curso.value.trim() === "" || instituicao.value.trim() === "") {
+        if (curso === "" && instituicao === "" && ano === "") return { vazio: true };
+        if (curso === "") return { campo: campoCurso, msg: "Informe o curso da formação." };
+        if (instituicao === "") return { campo: campoInstituicao, msg: "Informe a instituição da formação." };
+        if (ano !== "" && (!/^\d{4}$/.test(ano) || Number(ano) < 1950 || Number(ano) > ANO_MAXIMO)) {
+            return { campo: campoAno, msg: "Ano inválido. Use 4 dígitos, por exemplo 2024." };
+        }
+        return null;
+    }
+
+    function limparErrosFormacao() {
+        [campoCurso, campoInstituicao, campoAno].forEach(limparErroLista);
+    }
+
+    function adicionarFormacao(avisar) {
+        limparErrosFormacao();
+        const erro = erroDaFormacaoDigitada();
+
+        if (erro && erro.vazio) {
+            if (avisar) mostrarErroLista(campoCurso, "Preencha o curso e a instituição para adicionar.");
+            return false;
+        }
+        if (erro) {
+            mostrarErroLista(erro.campo, erro.msg);
+            return false;
+        }
+        if (estado.formacoes.length >= 10) {
+            mostrarErroLista(campoCurso, "Limite de 10 formações atingido.");
             return false;
         }
 
-        if (estado.formacoes.length < 10) {
-            estado.formacoes.push({
-                curso: curso.value.trim(),
-                instituicao: instituicao.value.trim(),
-                ano: ano.value.trim(),
-            });
-            desenharFormacoes();
-        }
-
-        curso.value = "";
-        instituicao.value = "";
-        ano.value = "";
-        curso.focus();
+        estado.formacoes.push({
+            curso: campoCurso.value.trim(),
+            instituicao: campoInstituicao.value.trim(),
+            ano: campoAno.value.trim(),
+        });
+        desenharFormacoes();
+        campoCurso.value = "";
+        campoInstituicao.value = "";
+        campoAno.value = "";
+        campoCurso.focus();
         return true;
     }
 
-    document.getElementById("add-formacao-btn").addEventListener("click", adicionarFormacao);
+    document.getElementById("add-formacao-btn").addEventListener("click", () => adicionarFormacao(true));
     desenharFormacoes();
 
-    // ---- Salvar: inclui o que ficou digitado e monta os campos que vão pro PHP ----
-    edicao.addEventListener("submit", () => {
-        ["soft", "hard"].forEach((tipo) => adicionarSkill(tipo));
-        adicionarFormacao();
+    // ---- Salvar ----
+    // Registrado depois do carregamento para rodar DEPOIS da validação dos campos comuns (validacao-form.js)
+    window.addEventListener("load", () => {
+        edicao.addEventListener("submit", (ev) => {
+            // O que ficou digitado e não foi adicionado entra na lista (ou mostra o erro)
+            ["soft", "hard"].forEach((tipo) => {
+                adicionarSkill(tipo, false);
 
-        const area = document.getElementById("campos-ocultos");
-        area.innerHTML = "";
+                if (OBRIGATORIOS[tipo] && estado[tipo].length === 0) {
+                    mostrarErroLista(
+                        document.getElementById("perfil-" + tipo + "-input"),
+                        "Adicione pelo menos uma " + NOMES_SKILL[tipo] + "."
+                    );
+                }
+            });
 
-        const criar = (nome, valor) => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = nome;
-            input.value = valor;
-            area.appendChild(input);
-        };
+            limparErrosFormacao();
+            const erroFormacao = erroDaFormacaoDigitada();
+            if (erroFormacao === null) {
+                adicionarFormacao(false);
+            } else if (!erroFormacao.vazio) {
+                mostrarErroLista(erroFormacao.campo, erroFormacao.msg);
+            }
+            if (OBRIGATORIOS.formacao && estado.formacoes.length === 0 && erroFormacao !== null && erroFormacao.vazio) {
+                mostrarErroLista(campoCurso, "Adicione pelo menos uma formação.");
+            }
 
-        estado.soft.forEach((nome) => criar("soft_skills[]", nome));
-        estado.hard.forEach((nome) => criar("hard_skills[]", nome));
-        estado.formacoes.forEach((f) => {
-            criar("formacao_curso[]", f.curso);
-            criar("formacao_instituicao[]", f.instituicao);
-            criar("formacao_ano[]", f.ano || "");
+            // Algum campo com erro: bloqueia o envio e leva o foco até o primeiro
+            const primeiroComErro = edicao.querySelector(".campo-invalido");
+            if (primeiroComErro) {
+                ev.preventDefault();
+                primeiroComErro.focus();
+                return;
+            }
+            if (ev.defaultPrevented) return;
+
+            // Tudo certo: monta os campos escondidos que vão pro PHP
+            const area = document.getElementById("campos-ocultos");
+            area.innerHTML = "";
+
+            const criar = (nome, valor) => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = nome;
+                input.value = valor;
+                area.appendChild(input);
+            };
+
+            estado.soft.forEach((nome) => criar("soft_skills[]", nome));
+            estado.hard.forEach((nome) => criar("hard_skills[]", nome));
+            estado.formacoes.forEach((f) => {
+                criar("formacao_curso[]", f.curso);
+                criar("formacao_instituicao[]", f.instituicao);
+                criar("formacao_ano[]", f.ano || "");
+            });
         });
     });
 </script>

@@ -97,5 +97,6 @@ if (isset($_SESSION["email"])) {
 </div>
 
 <script src="../assets/js/login.js"></script>
+<script src="../assets/js/validacao-form.js"></script>
 </body>
 </html>
