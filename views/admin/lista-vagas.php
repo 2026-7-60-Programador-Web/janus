@@ -2,6 +2,8 @@
 
 session_start();
 
+require_once __DIR__ . '/../../core/conexao.php';
+
 // Bloqueia quem não está logado ou não é administrador
 if (!isset($_SESSION["email"]) || ($_SESSION["tipo"] ?? "") !== "administrador") {
     header("Location: ../login.php");
@@ -21,18 +23,9 @@ if (empty($_SESSION["csrf"])) {
 }
 $csrf = $_SESSION["csrf"];
 
-// Lê as vagas do JSON
-$arquivo = __DIR__ . "/../../data/vagas.json";
-$vagas = [];
-if (is_file($arquivo)) {
-    $dados = json_decode(file_get_contents($arquivo), true);
-    if (is_array($dados)) {
-        $vagas = $dados;
-    }
-}
-
-// Mais recentes primeiro
-usort($vagas, fn($a, $b) => strcmp($b["criado_em"] ?? "", $a["criado_em"] ?? ""));
+// Lê as vagas do banco (mais recentes primeiro)
+$stmt = $pdo->query("SELECT * FROM vagas ORDER BY criado_em DESC, id DESC");
+$vagas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Áreas distintas para o filtro
 $areas = array_values(array_unique(array_filter(array_map(fn($v) => $v["area"] ?? "", $vagas))));

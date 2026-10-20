@@ -2,7 +2,9 @@
 
 session_start();
 
-$listaUrl = "../../views/admin/lista-vagas.php";
+require_once __DIR__ . "/../../core/conexao.php";
+
+$listaUrl = "/../../views/admin/lista-vagas.php";
 
 // Só administrador logado pode editar ou excluir vagas
 if (!isset($_SESSION["email"]) || ($_SESSION["tipo"] ?? "") !== "administrador") {
@@ -27,7 +29,7 @@ if (empty($_SESSION["csrf"]) || !hash_equals($_SESSION["csrf"], $token)) {
 $acao = $_POST["acao"] ?? "";
 $id   = trim($_POST["id"] ?? "");
 
-if ($id === "" || !in_array($acao, ["editar", "excluir"], true)) {
+if (!ctype_digit($id) || !in_array($acao, ["editar", "excluir"], true)) {
     $_SESSION["erro_geral"] = "Ação inválida.";
     header("Location: " . $listaUrl);
     exit;
@@ -93,58 +95,28 @@ if ($acao === "editar") {
     }
 }
 
-// ---- Persistência em arquivo JSON (troque por banco quando tiver um) ----
-$arquivo = __DIR__ . "/../../data/vagas.json";
+// ---- Persistência no banco de dados ----
+$idVaga = (int) $id;
 
-$fp = fopen($arquivo, "c+");
-if ($fp === false || !flock($fp, LOCK_EX)) {
-    $_SESSION["erro_geral"] = "Não foi possível acessar as vagas. Tente novamente.";
-    header("Location: " . $listaUrl);
-    exit;
-}
-
-$conteudo = stream_get_contents($fp);
-$vagas = $conteudo !== "" ? json_decode($conteudo, true) : [];
-if (!is_array($vagas)) {
-    $vagas = [];
-}
-
-$encontrada = false;
-
-if ($acao === "excluir") {
-    $restantes = array_values(array_filter($vagas, function ($v) use ($id, &$encontrada) {
-        if (($v["id"] ?? "") === $id) {
-            $encontrada = true;
-            return false;
-        }
-        return true;
-    }));
-    $vagas = $restantes;
-} else {
-    foreach ($vagas as &$v) {
-        if (($v["id"] ?? "") === $id) {
-            $v["titulo"]     = $titulo;
-            $v["empresa"]    = $empresa;
-            $v["area"]       = $area;
-            $v["descricao"]  = $descricao;
-            $v["editado_por"] = $_SESSION["email"];
-            $v["editado_em"]  = date("Y-m-d H:i:s");
-            $encontrada = true;
-            break;
-        }
-    }
-    unset($v);
-}
+// Confere se a vaga existe (evita erro quando já foi excluída)
+$stmt = $pdo->prepare("SELECT id FROM vagas WHERE id = ?");
+$stmt->execute([$idVaga]);
+$encontrada = (bool) $stmt->fetch();
 
 if ($encontrada) {
-    ftruncate($fp, 0);
-    rewind($fp);
-    fwrite($fp, json_encode($vagas, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    fflush($fp);
+    if ($acao === "excluir") {
+        $stmt = $pdo->prepare("DELETE FROM vagas WHERE id = ?");
+        $stmt->execute([$idVaga]);
+    } else {
+        $stmt = $pdo->prepare(
+            "UPDATE vagas
+                SET titulo = ?, empresa = ?, area = ?, descricao = ?,
+                    editado_por = ?, editado_em = NOW()
+              WHERE id = ?"
+        );
+        $stmt->execute([$titulo, $empresa, $area, $descricao, $_SESSION["email"], $idVaga]);
+    }
 }
-
-flock($fp, LOCK_UN);
-fclose($fp);
 
 if (!$encontrada) {
     $_SESSION["erro_geral"] = "Vaga não encontrada. Ela pode já ter sido excluída.";

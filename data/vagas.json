@@ -1,11 +1,22 @@
 [
     {
-        "id": "vaga_6abafb7c813024.88833414",
-        "titulo": "web",
-        "empresa": "senac",
-        "area": "tecnologia",
-        "descricao": "fgeerdfevre",
-        "criado_por": "walyson@email.com",
-        "criado_em": "2026-09-29 01:42:52"
+        "id": "vaga_6ad6aef5cbe4d0.99653854",
+        "titulo": "Suporte de t.i",
+        "empresa": "Mateus",
+        "area": "T.I",
+        "descricao": "Escala:\r\n- 6x1;\r\n- Salário mínimo;\r\n- VA & VR;",
+        "criado_por": "cauan@email.com",
+        "criado_em": "2026-10-20 01:59:49",
+        "editado_por": "cauan@email.com",
+        "editado_em": "2026-10-20 02:03:53"
+    },
+    {
+        "id": "vaga_6ad6b08f17af17.85027613",
+        "titulo": "Desenvolvedor PHP",
+        "empresa": "Sankhya",
+        "area": "Tecnologia da informação",
+        "descricao": "Beneficios:\r\n- 3.500\r\n- VA & VR\r\n- 5x2",
+        "criado_por": "cauan@email.com",
+        "criado_em": "2026-10-20 02:06:39"
     }
 ]
