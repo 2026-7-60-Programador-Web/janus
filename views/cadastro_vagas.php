@@ -1,16 +1,42 @@
 <?php
 /**
- * Janus - Cadastro de Vaga (VIEW)
- * Somente a tela. O processamento fica em cadastro_vaga_processar.php.
+ * Janus - Cadastro de Vagas (VIEW)  ->  views/cadastro_vagas.php
+ * Somente a tela. O processamento fica no controller (ver $acaoProcessar).
  *
- * Retorno esperado do processar (opcional), via redirecionamento:
- *   cadastro_vaga.php?status=sucesso
- *   cadastro_vaga.php?status=erro&msg=Texto+do+erro
+ * Contrato com o controller (mesmo padrão de cadastro_processar.php):
+ *   Em caso de erro:    $_SESSION['vaga_erro']    = 'mensagem';
+ *                       $_SESSION['vaga_dados']   = $_POST;   // repovoar o formulário
+ *   Em caso de sucesso: $_SESSION['vaga_sucesso'] = 'mensagem';
+ *   Depois:             header('Location: ' . BASE_URL . '/views/cadastro_vagas.php'); exit;
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . '/../config/config.php'; // define BASE_URL
+
+// TODO: se esta página for só para empresas logadas, incluir aqui a verificação
+// de sessão do projeto (core/autenticacao.php).
+
+// Caminho do controller que processa o formulário (ajustar se o nome mudar).
+$acaoProcessar = BASE_URL . '/controllers/cadastro_vaga_processar.php';
 
 if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+
+// Mensagens e dados antigos (flash: lidos uma vez e apagados)
+$erro    = $_SESSION['vaga_erro']    ?? '';
+$sucesso = $_SESSION['vaga_sucesso'] ?? '';
+$dados   = $_SESSION['vaga_dados']   ?? [];
+unset($_SESSION['vaga_erro'], $_SESSION['vaga_sucesso'], $_SESSION['vaga_dados']);
+
+function vaga_old(string $campo, string $padrao = ''): string {
+    global $dados;
+    return htmlspecialchars((string)($dados[$campo] ?? $padrao), ENT_QUOTES, 'UTF-8');
+}
+function vaga_sel(string $campo, string $valor): string {
+    global $dados;
+    return (($dados[$campo] ?? '') === $valor) ? 'selected' : '';
 }
 
 // Troque por consulta ao banco se as áreas já existirem lá.
@@ -23,9 +49,6 @@ $tiposContrato = ['CLT', 'PJ', 'Estágio', 'Jovem Aprendiz', 'Temporário', 'Fre
 $modalidades   = ['Presencial', 'Híbrido', 'Remoto'];
 $niveis        = ['Estagiário', 'Júnior', 'Pleno', 'Sênior', 'Não se aplica'];
 $ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-
-$status = $_GET['status'] ?? '';
-$msg    = $_GET['msg'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="light">
@@ -65,18 +88,21 @@ $msg    = $_GET['msg'] ?? '';
                 <p class="text-body-secondary mb-0">Preencha os dados abaixo. A vaga será exibida aos egressos conforme a área de atuação.</p>
             </div>
 
-            <?php if ($status === 'sucesso'): ?>
+            <?php if ($sucesso !== ''): ?>
                 <div class="alert alert-success d-flex align-items-center" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i> Vaga cadastrada com sucesso!
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <?= htmlspecialchars($sucesso, ENT_QUOTES, 'UTF-8') ?>
                 </div>
-            <?php elseif ($status === 'erro'): ?>
+            <?php endif; ?>
+            <?php if ($erro !== ''): ?>
                 <div class="alert alert-danger d-flex align-items-center" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <?= htmlspecialchars($msg !== '' ? $msg : 'Não foi possível cadastrar a vaga.', ENT_QUOTES, 'UTF-8') ?>
+                    <?= htmlspecialchars($erro, ENT_QUOTES, 'UTF-8') ?>
                 </div>
             <?php endif; ?>
 
-            <form action="../controllers/cadastro_vaga_processar.php" method="post" class="card janus-card" id="formVaga" novalidate>
+            <form action="<?= htmlspecialchars($acaoProcessar, ENT_QUOTES, 'UTF-8') ?>" method="post"
+                  class="card janus-card" id="formVaga" novalidate>
                 <div class="card-body p-4">
                     <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 
@@ -86,26 +112,28 @@ $msg    = $_GET['msg'] ?? '';
                         <div class="col-md-8">
                             <label for="titulo" class="form-label">Título da vaga *</label>
                             <input type="text" class="form-control" id="titulo" name="titulo" maxlength="120"
+                                   value="<?= vaga_old('titulo') ?>"
                                    placeholder="Ex.: Desenvolvedor Web Júnior" required>
                             <div class="invalid-feedback">Informe o título da vaga.</div>
                         </div>
                         <div class="col-md-4">
                             <label for="quantidade" class="form-label">Nº de vagas *</label>
                             <input type="number" class="form-control" id="quantidade" name="quantidade"
-                                   min="1" max="999" value="1" required>
+                                   min="1" max="999" value="<?= vaga_old('quantidade', '1') ?>" required>
                             <div class="invalid-feedback">Mínimo 1.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="empresa" class="form-label">Empresa *</label>
-                            <input type="text" class="form-control" id="empresa" name="empresa" maxlength="120" required>
+                            <input type="text" class="form-control" id="empresa" name="empresa" maxlength="120"
+                                   value="<?= vaga_old('empresa') ?>" required>
                             <div class="invalid-feedback">Informe a empresa.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="area" class="form-label">Área de atuação *</label>
                             <select class="form-select" id="area" name="area_atuacao" required>
-                                <option value="" selected disabled>Selecione...</option>
+                                <option value="" disabled <?= empty($dados['area_atuacao']) ? 'selected' : '' ?>>Selecione...</option>
                                 <?php foreach ($areas as $a): ?>
-                                    <option value="<?= htmlspecialchars($a) ?>"><?= htmlspecialchars($a) ?></option>
+                                    <option value="<?= htmlspecialchars($a) ?>" <?= vaga_sel('area_atuacao', $a) ?>><?= htmlspecialchars($a) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Selecione a área.</div>
@@ -118,9 +146,9 @@ $msg    = $_GET['msg'] ?? '';
                         <div class="col-md-4">
                             <label for="tipo_contrato" class="form-label">Tipo de contrato *</label>
                             <select class="form-select" id="tipo_contrato" name="tipo_contrato" required>
-                                <option value="" selected disabled>Selecione...</option>
+                                <option value="" disabled <?= empty($dados['tipo_contrato']) ? 'selected' : '' ?>>Selecione...</option>
                                 <?php foreach ($tiposContrato as $t): ?>
-                                    <option><?= $t ?></option>
+                                    <option <?= vaga_sel('tipo_contrato', $t) ?>><?= $t ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Selecione o contrato.</div>
@@ -128,9 +156,9 @@ $msg    = $_GET['msg'] ?? '';
                         <div class="col-md-4">
                             <label for="nivel" class="form-label">Nível *</label>
                             <select class="form-select" id="nivel" name="nivel" required>
-                                <option value="" selected disabled>Selecione...</option>
+                                <option value="" disabled <?= empty($dados['nivel']) ? 'selected' : '' ?>>Selecione...</option>
                                 <?php foreach ($niveis as $n): ?>
-                                    <option><?= $n ?></option>
+                                    <option <?= vaga_sel('nivel', $n) ?>><?= $n ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Selecione o nível.</div>
@@ -138,16 +166,17 @@ $msg    = $_GET['msg'] ?? '';
                         <div class="col-md-4">
                             <label for="modalidade" class="form-label">Modalidade *</label>
                             <select class="form-select" id="modalidade" name="modalidade" required>
-                                <option value="" selected disabled>Selecione...</option>
+                                <option value="" disabled <?= empty($dados['modalidade']) ? 'selected' : '' ?>>Selecione...</option>
                                 <?php foreach ($modalidades as $m): ?>
-                                    <option><?= $m ?></option>
+                                    <option <?= vaga_sel('modalidade', $m) ?>><?= $m ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Selecione a modalidade.</div>
                         </div>
                         <div class="col-md-8" id="grpCidade">
                             <label for="cidade" class="form-label">Cidade *</label>
-                            <input type="text" class="form-control" id="cidade" name="cidade" maxlength="80">
+                            <input type="text" class="form-control" id="cidade" name="cidade" maxlength="80"
+                                   value="<?= vaga_old('cidade') ?>">
                             <div class="invalid-feedback">Informe a cidade.</div>
                         </div>
                         <div class="col-md-4" id="grpUf">
@@ -155,7 +184,7 @@ $msg    = $_GET['msg'] ?? '';
                             <select class="form-select" id="uf" name="uf">
                                 <option value="">--</option>
                                 <?php foreach ($ufs as $u): ?>
-                                    <option><?= $u ?></option>
+                                    <option <?= vaga_sel('uf', $u) ?>><?= $u ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Selecione a UF.</div>
@@ -167,17 +196,20 @@ $msg    = $_GET['msg'] ?? '';
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <label for="salario_min" class="form-label">Salário mínimo (R$)</label>
-                            <input type="number" step="0.01" min="0" class="form-control" id="salario_min" name="salario_min">
+                            <input type="number" step="0.01" min="0" class="form-control" id="salario_min"
+                                   name="salario_min" value="<?= vaga_old('salario_min') ?>">
                         </div>
                         <div class="col-md-4">
                             <label for="salario_max" class="form-label">Salário máximo (R$)</label>
-                            <input type="number" step="0.01" min="0" class="form-control" id="salario_max" name="salario_max">
+                            <input type="number" step="0.01" min="0" class="form-control" id="salario_max"
+                                   name="salario_max" value="<?= vaga_old('salario_max') ?>">
                             <div class="invalid-feedback">O máximo deve ser maior ou igual ao mínimo.</div>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" role="switch" id="salario_a_combinar"
-                                       name="salario_a_combinar" value="1">
+                                       name="salario_a_combinar" value="1"
+                                       <?= (($dados['salario_a_combinar'] ?? '') === '1') ? 'checked' : '' ?>>
                                 <label class="form-check-label" for="salario_a_combinar">A combinar</label>
                             </div>
                         </div>
@@ -189,18 +221,18 @@ $msg    = $_GET['msg'] ?? '';
                         <div class="col-12">
                             <label for="descricao" class="form-label">Descrição *</label>
                             <textarea class="form-control" id="descricao" name="descricao" rows="4" minlength="20"
-                                      placeholder="Principais atividades e responsabilidades" required></textarea>
+                                      placeholder="Principais atividades e responsabilidades" required><?= vaga_old('descricao') ?></textarea>
                             <div class="invalid-feedback">Descreva a vaga (mín. 20 caracteres).</div>
                         </div>
                         <div class="col-md-6">
                             <label for="requisitos" class="form-label">Requisitos</label>
                             <textarea class="form-control" id="requisitos" name="requisitos" rows="3"
-                                      placeholder="Formação, conhecimentos, experiência"></textarea>
+                                      placeholder="Formação, conhecimentos, experiência"><?= vaga_old('requisitos') ?></textarea>
                         </div>
                         <div class="col-md-6">
                             <label for="beneficios" class="form-label">Benefícios</label>
                             <textarea class="form-control" id="beneficios" name="beneficios" rows="3"
-                                      placeholder="VR, VT, plano de saúde..."></textarea>
+                                      placeholder="VR, VT, plano de saúde..."><?= vaga_old('beneficios') ?></textarea>
                         </div>
                     </div>
 
@@ -211,14 +243,15 @@ $msg    = $_GET['msg'] ?? '';
                             <label for="email_contato" class="form-label">E-mail para candidaturas *</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                <input type="email" class="form-control" id="email_contato" name="email_contato" required>
+                                <input type="email" class="form-control" id="email_contato" name="email_contato"
+                                       value="<?= vaga_old('email_contato') ?>" required>
                                 <div class="invalid-feedback">Informe um e-mail válido.</div>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <label for="data_limite" class="form-label">Data limite</label>
                             <input type="date" class="form-control" id="data_limite" name="data_limite"
-                                   min="<?= date('Y-m-d') ?>">
+                                   min="<?= date('Y-m-d') ?>" value="<?= vaga_old('data_limite') ?>">
                         </div>
                     </div>
                 </div>
